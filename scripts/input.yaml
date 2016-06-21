@@ -1,0 +1,21 @@
+proc:
+    model: dmx
+    output: dmx_test
+    process: p p > ~xf8 ~xf8~
+
+param:
+    MX: 600
+    MDM: 550
+    Lambda: 10000
+
+run:
+    ptj: 0
+    ebeam1: 6500
+    ebeam2: 6500 
+
+output: None
+
+cluster:
+    q: thepshort
+    W: 5:00
+    app: Reserve5G

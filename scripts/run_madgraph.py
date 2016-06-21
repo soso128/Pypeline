@@ -1,7 +1,8 @@
 import yaml
 import card_edit as cd
-from itertools import product, izip
-from Subprocess import call
+import re
+from itertools import product, chain
+from subprocess import call
 
 # Reads the yaml card and processes the information
 def script_from_yaml(filename, jobdir = "../jobs/"):
@@ -16,30 +17,41 @@ def script_from_yaml(filename, jobdir = "../jobs/"):
     if "cluster" in card:
         cluster_info = card["cluster"]
     # Make a job directory with name model_process_output
-    proc_name = ''
-    for p in proc_info:
-        proc_suffix += re.sub("[~>]", '', re.sub('\s', '_', parameters[p]))
+    proc_suffix = ''
+    for p in sorted(proc_info.keys()):
+        proc_suffix += re.sub("[~>]", '', re.sub('\s', '_', proc_info[p]))
         proc_suffix += '_'
     out_dir = jobdir + proc_suffix.rstrip('_')
-    call(i['mkdir', '-p'], out_dir)
+    call(['mkdir', '-p', out_dir])
     # Edit the proc card and copy it into job dir
-    cd.edit_proc_card(proc_info, out_dir)
+    cd.proc_card_edit(proc_info, out_dir)
     # Edit the run card and copy it into job dir
-    cd.edit_run_card(run_info, jobdir)
+    cd.run_card_edit(run_info, out_dir)
     # Iterate over the cartesian product of 
     # parameters in the param card
-    param_prod = (dict(izip(param_info, x)) for x in 
-                  product(*param_info.itervalues()))
+    param_prod = (dict(zip(param_info.keys(), x)) for x in 
+                  product(*[make_iter(param_info[k]) for k in param_info.keys()]))
     for p in param_prod:
-        par_name = cd.edit_param_card(p, proc_info['model'], jobdir)
+        par_name = cd.param_card_edit(p, proc_info['model'], out_dir)
         # Launch the run
-        run_events(jobdir, par_name, cluster_info) 
+        run_events(out_dir, par_name, cluster_info) 
 
 def run_events(jobdir, par_name, cluster):
-    submit_command = ['./launch_madgraph.py', jobdir, par_name]
+    submit_command = ['./run_madgraph.sh', jobdir, par_name]
     # If cluster, specify the cluster options
     if cluster != None:
-        submit_command = ['bsub'] + list(chain([c, '-' + cluster[c]] 
-                                    for c in cluster)) + submit_command
+        submit_command = ['bsub'] + list(chain(*[['-' + c, str(cluster[c])] 
+                                    for c in cluster])) + submit_command
+    print(submit_command)
     call(submit_command)
+
+def make_iter(num):
+    try:
+        dummy = num[0]
+        return num
+    except TypeError:
+        return [num]
+    return None
+
+script_from_yaml("input.yaml")
         
