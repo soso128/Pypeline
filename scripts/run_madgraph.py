@@ -35,14 +35,24 @@ def script_from_yaml(filename, jobdir = "../jobs/"):
     for p in param_prod:
         par_name = cd.param_card_edit(p, proc_info['model'], out_dir)
         # Launch the run
-        run_events(out_dir, par_name, cluster_info) 
+        run_events(out_dir, par_name, cluster_info, output_info) 
 
-def run_events(jobdir, par_name, cluster):
-    submit_command = ['./run_madgraph.sh', jobdir, par_name]
+def run_events(jobdir, par_name, cluster, output):
+    submit_command = ['./run_madgraph.sh']
+    # If output (script, etc, ...)
+    output_options = {"script": 's', "dir": 'o', "files": 'f'}
+    for o in output_options:
+        try:
+            submit_command += ["-{}".format(output_options[o]), output[o]]
+        except KeyError:
+            pass
+    submit_command += [jobdir, par_name]
     # If cluster, specify the cluster options
     if cluster != None:
         submit_command = ['bsub'] + list(chain(*[['-' + c, str(cluster[c])] 
                                     for c in cluster])) + submit_command
+    else:
+        submit_command += ["-l", "{}/{}/".format(jobdir,par_name)]
     print(submit_command)
     call(submit_command)
 
