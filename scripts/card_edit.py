@@ -18,7 +18,8 @@ def param_card_edit(parameters, model_name, output_dir, param_dir = '../Cards'):
             content = re.sub(r"([^\\n]*)\s[^\\s]*\s# {0} (.*)".format(p), 
                              r"\1 {1} # {0} \2".format(p, parameters[p]), 
                              content)
-            par_suffix += "{}{}_".format(p, str(parameters[p]).replace('.', 'p'))
+            par_suffix += "{}{}_".format(p, str(parameters[p]).replace(
+                '.', 'p')).replace('p0_', '_')
         par_file_name = 'param_card_{}.dat'.format(par_suffix.rstrip('_'))
         par_path = "{}/{}".format(output_dir, par_file_name)
         print(content, file = open(par_path, 'w'))

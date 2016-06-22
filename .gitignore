@@ -1,4 +1,4 @@
 *.pyc
 jobs/
 *.o
-*__pycache__
+__pycache__

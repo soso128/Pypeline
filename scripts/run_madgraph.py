@@ -3,6 +3,7 @@ import card_edit as cd
 import re
 from itertools import product, chain
 from subprocess import call
+from utils import make_list
 
 # Reads the yaml card and processes the information
 def script_from_yaml(filename, jobdir = "../jobs/"):
@@ -30,7 +31,7 @@ def script_from_yaml(filename, jobdir = "../jobs/"):
     # Iterate over the cartesian product of 
     # parameters in the param card
     param_prod = (dict(zip(param_info.keys(), x)) for x in 
-                  product(*[make_iter(param_info[k]) for k in param_info.keys()]))
+                  product(*[make_list(param_info[k]) for k in param_info.keys()]))
     for p in param_prod:
         par_name = cd.param_card_edit(p, proc_info['model'], out_dir)
         # Launch the run
@@ -44,14 +45,6 @@ def run_events(jobdir, par_name, cluster):
                                     for c in cluster])) + submit_command
     print(submit_command)
     call(submit_command)
-
-def make_iter(num):
-    try:
-        dummy = num[0]
-        return num
-    except TypeError:
-        return [num]
-    return None
 
 script_from_yaml("../input/input.yaml")
         

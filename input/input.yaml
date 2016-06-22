@@ -4,14 +4,14 @@ proc:
     process: p p > ~xf8 ~xf8~
 
 param:
-    MX: 600
-    MDM: 550
+    MX: 600-800 100
+    MDM: 550-600 50
     Lambda: 10000
 
 run:
     ptj: 0
     ebeam1: 6500
-    ebeam2: 6500 
+    ebeam2: 6500
 
 output: None
 
