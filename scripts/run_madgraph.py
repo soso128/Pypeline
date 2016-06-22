@@ -53,5 +53,5 @@ def make_iter(num):
         return [num]
     return None
 
-script_from_yaml("input.yaml")
+script_from_yaml("../input/input.yaml")
         

@@ -28,6 +28,6 @@ def run_card_edit(parameters, output_dir, run_dir = '../Cards'):
     with open("{}/run_card.dat".format(run_dir)) as card:
         content = card.read()
         for p in parameters:
-            content = re.sub(r"(\\s)[^=]*=(\\s){0}([^\\n]*)".format(p), 
-                             r"\1{1} =\2{0}\3".format(p,parameters[p]), content)
+            content = re.sub(r"(\s*)[0-9]*(\s*)=(\s*){0}([^\n]*)\n".format(p), 
+                             r"\1 {1}\2=\3{0}\4\n".format(p, parameters[p]), content)
         print(content, file = open("{}/run_card.dat".format(output_dir), 'w'))
