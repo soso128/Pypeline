@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Source the environment variables
 source env_file.sh
 
 local=$PWD
@@ -26,26 +27,43 @@ do
         ;;
     esac
 done
+# Get job directory (cards) and param card name
+jobdir=${@:$OPTIND:1}
+parname=${@:$OPTIND+1:1}
+# Install MadGraph locally
 cp $TAR_DIR/$MADGRAPH.tar.gz $SCRATCH/
 cd $SCRATCH
 tar -xzf $SCRATCH/$MADGRAPH.tar.gz
 rm $SCRATCH/$MADGRAPH.tar.gz
 cd $local
-cp $1/*card*.dat $SCRATCH/$MADGRAPH/
+# Get Cards
+cp $jobdir/*card*.dat $SCRATCH/$MADGRAPH/
 cd $SCRATCH/$MADGRAPH
+# Generate output for the process and grab model name
 ./bin/mg5_aMC proc_card_mg5.dat
 model=`grep ^output proc_card_mg5.dat | awk '{print $2}'`
-cp run_card.dat $model
-cp $2 $model/param_card.dat
+rm proc_card_mg5.dat
+# Copy other cards in the model/Cards directory
+cp *card* $model/Cards/
+cp $model/Cards/$parname $model/Cards/param_card.dat
 cd $model/Events/
-../bin/generate_events 0 run_01 > madgraph_output.txt
+# Edit the me5_configuration file to add Pythia and Delphes directories
+# if necessary
+if [ -f ../Cards/pythia_card.dat ]
+then
+    echo "pythia-pgs_path="$PYTHIAPGS >> ../Cards/me5_configuration.txt
+fi
+if [ -f ../Cards/delphes_card.dat ]
+then
+    echo "delphes_path="$DELPHES >> ../Cards/me5_configuration.txt
+fi
+# Run MadGraph (+ Pythia + Delphes if the cards are there)
+../bin/generate_events 0 run_01 #> madgraph_output.txt
 mv madgraph_output.txt run_01
 cd run_01
 # Get decay width and/or cross section
 awk '{if($1 == "Width") print $3}' < madgraph_output.txt > width.txt
 awk '{if($1 == "Cross-section") print $3}' < madgraph_output.txt > MG_xsec.txt
-cat MG_xsec.txt
-ls
 # If asked, run custom script
 if [ $script_name != "null" ]
 then

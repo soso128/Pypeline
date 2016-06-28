@@ -1,7 +1,7 @@
 import yaml
 import card_edit as cd
 import re
-from itertools import product, chain
+from itertools import product
 from subprocess import call
 from utils import make_list
 
@@ -14,6 +14,19 @@ def script_from_yaml(filename, jobdir = "../jobs/"):
     param_info = card["param"]
     run_info = card["run"]
     output_info = card["output"]
+    # Possible decays
+    decay_info = None
+    if "decays" in card:
+        decay_info = card["decays"]
+    # Pythia 6 info
+    pythia6_info = None
+    if "pythia6" in card:
+        pythia6_info = card["pythia6"]
+    # Delphes info
+    delphes_info = None
+    if "delphes" in card:
+        delphes_info = card["delphes"]
+    # Cluster options
     cluster_info = None
     if "cluster" in card:
         cluster_info = card["cluster"]
@@ -28,12 +41,16 @@ def script_from_yaml(filename, jobdir = "../jobs/"):
     cd.proc_card_edit(proc_info, out_dir)
     # Edit the run card and copy it into job dir
     cd.run_card_edit(run_info, out_dir)
+    # Edit the pythia6 card and copy it into job dir
+    cd.pythia6_card_edit(pythia6_info, out_dir)
+    # Edit the delphes card and copy it into job dir
+    cd.delphes_card_edit(delphes_info, out_dir)
     # Iterate over the cartesian product of 
     # parameters in the param card
     param_prod = (dict(zip(param_info.keys(), x)) for x in 
                   product(*[make_list(param_info[k]) for k in param_info.keys()]))
     for p in param_prod:
-        par_name = cd.param_card_edit(p, proc_info['model'], out_dir)
+        par_name = cd.param_card_edit(p, decay_info, proc_info['model'], out_dir)
         # Launch the run
         run_events(out_dir, par_name, cluster_info, output_info) 
 
@@ -46,13 +63,13 @@ def run_events(jobdir, par_name, cluster, output):
             submit_command += ["-{}".format(output_options[o]), output[o]]
         except KeyError:
             pass
-    submit_command += [jobdir, par_name]
     # If cluster, specify the cluster options
     if cluster != None:
-        submit_command = ['bsub'] + list(chain(*[['-' + c, str(cluster[c])] 
-                                    for c in cluster])) + submit_command
+        submit_command = ['bsub'] + list(sum([['-' + c, str(cluster[c])] 
+                                    for c in cluster], [])) + submit_command
     else:
         submit_command += ["-l", "{}/{}/".format(jobdir,par_name)]
+    submit_command += [jobdir, par_name]
     print(submit_command)
     call(submit_command)
 
