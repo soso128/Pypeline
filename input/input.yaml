@@ -4,18 +4,31 @@ proc:
     process: p p > ~xf8 ~xf8~
 
 param:
-    MX: 600-800 100
-    MDM: 550-600 50
+    MX: 600
+    MDM: 550
     Lambda: 10000
+    "~dmf : MDM" : 550
+    "~xf8 : MX" : 600
+
+decays:
+    9000408: 1.0 2 -2 9000401
 
 run:
     ptj: 0
     ebeam1: 6500
     ebeam2: 6500
 
-output: None
+output:
+    dir: /home/elhed001/DMX/
+    files: unweighted_events.lhe.gz MG_xsec.txt *pythia*.hep.gz *delphes*.root madgraph_output.txt ../../Cards/me5_configuration.txt
 
 cluster:
     q: thepshort
     W: 5:00
     app: Reserve5G
+
+pythia6:
+    IMSS(22): 24
+
+delphes:
+    /home/elhed001/DMX/Cards/delphes_card_ATLAS.dat

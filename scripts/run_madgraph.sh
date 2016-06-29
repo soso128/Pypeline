@@ -45,7 +45,7 @@ model=`grep ^output proc_card_mg5.dat | awk '{print $2}'`
 rm proc_card_mg5.dat
 # Copy other cards in the model/Cards directory
 cp *card* $model/Cards/
-cp $model/Cards/$parname $model/Cards/param_card.dat
+cp $model/Cards/param_card_$parname.dat $model/Cards/param_card.dat
 cd $model/Events/
 # Edit the me5_configuration file to add Pythia and Delphes directories
 # if necessary
@@ -58,19 +58,39 @@ then
     echo "delphes_path="$DELPHES >> ../Cards/me5_configuration.txt
 fi
 # Run MadGraph (+ Pythia + Delphes if the cards are there)
-../bin/generate_events 0 run_01 #> madgraph_output.txt
+../bin/generate_events 0 run_01 > madgraph_output.txt
 mv madgraph_output.txt run_01
 cd run_01
 # Get decay width and/or cross section
 awk '{if($1 == "Width") print $3}' < madgraph_output.txt > width.txt
 awk '{if($1 == "Cross-section") print $3}' < madgraph_output.txt > MG_xsec.txt
+# Display output for debugging
+cat madgraph_output.txt
 # If asked, run custom script
 if [ $script_name != "null" ]
 then
     cp $scriptname .
-    ./$scriptname madgraph_output.txt
+    ./$scriptname $parname madgraph_output.txt
 fi
-# If output, copy files over
+# Give unique names to files
+mv width.txt width_$parname.txt
+mv MG_xsec.txt MG_xsec_$parname.txt
+for f in *.lhe.gz
+do
+    name=`basename $f .lhe.gz`
+    mv $f $name\_$parname.lhe.gz
+done
+for f in *.hep.gz
+do
+    name=`basename $f .hep.gz`
+    mv $f $name\_$parname.hep.gz
+done
+for f in *.root
+do
+    name=`basename $f .root`
+    mv $f $name\_$parname.root
+done
+# If output, copy requested files over
 if [ $output_dir != "null" ]
 then
     for file in $output_files

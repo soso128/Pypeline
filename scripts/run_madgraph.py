@@ -49,9 +49,11 @@ def script_from_yaml(filename, jobdir = "../jobs/"):
     # parameters in the param card
     param_prod = (dict(zip(param_info.keys(), x)) for x in 
                   product(*[make_list(param_info[k]) for k in param_info.keys()]))
+    print(*[make_list(param_info[k]) for k in param_info.keys()])
     for p in param_prod:
         par_name = cd.param_card_edit(p, decay_info, proc_info['model'], out_dir)
         # Launch the run
+        par_name = par_name.lstrip("param_card_").rstrip(".dat")
         run_events(out_dir, par_name, cluster_info, output_info) 
 
 def run_events(jobdir, par_name, cluster, output):
@@ -73,5 +75,5 @@ def run_events(jobdir, par_name, cluster, output):
     print(submit_command)
     call(submit_command)
 
-script_from_yaml("../input/input.yaml")
+script_from_yaml("../input/lifetime_decay.yaml")
         
