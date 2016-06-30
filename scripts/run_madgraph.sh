@@ -69,8 +69,10 @@ cat madgraph_output.txt
 # If asked, run custom script
 if [ $script_name != "null" ]
 then
-    cp $scriptname .
-    ./$scriptname $parname madgraph_output.txt
+    cp $script_name .
+    executable=`basename $script_name`
+    chmod +x $executable
+    ./$executable $parname madgraph_output.txt
 fi
 # Give unique names to files
 mv width.txt width_$parname.txt

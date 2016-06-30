@@ -85,7 +85,9 @@ class Tree(object):
             for b in self.branches:
                 expr = expr.replace(b.name, 
                                     str(b.resolve_dependencies(value_dict)[0]))
-            # Safely evaluate arithmetic expression
+            # "Safely" evaluate arithmetic expression
+            # This might make your python segfault but
+            # at least no rm -rf  is allowed
             self.value = av.Interpreter()(expr)
             # Put value in dictionary
             if self.name != "head": value_dict[self.name] = self.value
