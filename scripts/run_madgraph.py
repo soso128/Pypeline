@@ -6,7 +6,7 @@ from subprocess import call
 from utils import make_list
 
 # Reads the yaml card and processes the information
-def script_from_yaml(filename, jobdir = "../jobs/"):
+def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
     # Read yaml card and put parameters in dictionary
     f = open(filename)
     card = yaml.load(f)
@@ -51,7 +51,8 @@ def script_from_yaml(filename, jobdir = "../jobs/"):
                   product(*[make_list(param_info[k]) for k in param_info.keys()]))
     print(*[make_list(param_info[k]) for k in param_info.keys()])
     for p in param_prod:
-        par_name = cd.param_card_edit(p, decay_info, proc_info['model'], out_dir)
+        par_name = cd.param_card_edit(p, decay_info, proc_info['model'], 
+                                      out_dir, truncate = truncate)
         # Launch the run
         par_name = par_name.lstrip("param_card_").rstrip(".dat")
         run_events(out_dir, par_name, cluster_info, output_info) 
@@ -75,5 +76,5 @@ def run_events(jobdir, par_name, cluster, output):
     print(submit_command)
     call(submit_command)
 
-script_from_yaml("../input/lifetime_decay.yaml")
+script_from_yaml("../input/input.yaml", truncate=0)
         
