@@ -1,5 +1,4 @@
 import ast
-import asteval as av
 from re import match
 from numpy import arange
 from collections import ChainMap
@@ -86,11 +85,13 @@ class Tree(object):
                 expr = expr.replace(b.name, 
                                     str(b.resolve_dependencies(value_dict)[0]))
             # "Safely" evaluate arithmetic expression
-            # This might make your python segfault but
-            # at least no rm -rf  is allowed
-            self.value = av.Interpreter()(expr)
-            # Put value in dictionary
-            if self.name != "head": value_dict[self.name] = self.value
+            # You can still wreck the CPU but only 
+            # numerical values and common operators are
+            # allowed in the final expression
+            if self.name != "head": 
+                self.value = eval(expr)
+                # Put value in dictionary
+                value_dict[self.name] = self.value
             return self.value, value_dict
         return None
 

@@ -59,9 +59,9 @@ def run_card_edit(parameters, output_dir, run_dir = '../Cards'):
     with open("{}/run_card.dat".format(run_dir)) as card:
         for c in card:
             newstring = c
-            result = c.split('=')
+            result = c.split('=', 1)
             if len(result) == 2:
-                name = result[1].split('!')[0].strip()
+                name = result[1].split('!', 1)[0].strip()
                 if name in parameters.keys():
                     leading_spaces = len(c) - len(c.lstrip())
                     newstring = ' ' * leading_spaces + str(parameters[name])\

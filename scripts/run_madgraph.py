@@ -10,10 +10,29 @@ def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
     # Read yaml card and put parameters in dictionary
     f = open(filename)
     card = yaml.load(f)
-    proc_info = card["proc"]
-    param_info = card["param"]
-    run_info = card["run"]
-    output_info = card["output"]
+    # Proc card
+    proc_info = None
+    if "proc" in card:
+        proc_info = card["proc"]
+    # Param card
+    param_info = None
+    if "param" in card:
+        param_info = card["param"]
+    # Run card
+    run_info = None
+    if "run" in card:
+        run_info = card["run"]
+    # Output options
+    output_info = None
+    if "output" in card:
+        output_info = card["output"]
+    # If gridpack, get grid_info
+    # and update run card if needed
+    grid_info = None
+    if "gridpack" in card:
+        grid_info = card["gridpack"]
+        if grid_info["status"] == 0:
+            run_info["gridpack"] = "True"
     # Possible decays
     decay_info = None
     if "decays" in card:
@@ -55,16 +74,23 @@ def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
                                       out_dir, truncate = truncate)
         # Launch the run
         par_name = par_name.lstrip("param_card_").rstrip(".dat")
-        run_events(out_dir, par_name, cluster_info, output_info) 
+        run_events(out_dir, par_name, cluster_info, output_info, grid_info) 
 
-def run_events(jobdir, par_name, cluster, output):
+def run_events(jobdir, par_name, cluster, output, gridpack):
     submit_command = ['./run_madgraph.sh']
+    # If gridpack, set grid options
+    grid_options = {"status": 'g', "dir": 'h'}
+    for o in grid_options:
+        try:
+            submit_command += ["-{}".format(grid_options[o]), format(gridpack[o])]
+        except (KeyError, TypeError):
+            pass
     # If output (script, etc, ...)
     output_options = {"script": 's', "dir": 'o', "files": 'f'}
     for o in output_options:
         try:
             submit_command += ["-{}".format(output_options[o]), output[o]]
-        except KeyError:
+        except (KeyError, TypeError):
             pass
     # If cluster, specify the cluster options
     if cluster != None:
@@ -72,7 +98,7 @@ def run_events(jobdir, par_name, cluster, output):
                                     for c in cluster], [])) + submit_command
     else:
         submit_command += ["-l", "{}/{}/".format(jobdir,par_name)]
-    submit_command += [jobdir, par_name]
+    submit_command += ['-j', jobdir, '-p', par_name]
     print(submit_command)
     call(submit_command)
 
