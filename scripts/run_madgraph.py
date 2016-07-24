@@ -53,6 +53,7 @@ def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
     proc_suffix = ''
     for p in sorted(proc_info.keys()):
         proc_suffix += re.sub("[~>]", '', re.sub('\s', '_', proc_info[p]))
+        proc_suffix = proc_suffix.replace(',', '_')
         proc_suffix += '_'
     out_dir = jobdir + proc_suffix.rstrip('_')
     call(['mkdir', '-p', out_dir])
@@ -73,7 +74,7 @@ def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
         par_name = cd.param_card_edit(p, decay_info, proc_info['model'], 
                                       out_dir, truncate = truncate)
         # Launch the run
-        par_name = par_name.lstrip("param_card_").rstrip(".dat")
+        par_name = par_name.replace("param_card_", '').replace(".dat", '')
         run_events(out_dir, par_name, cluster_info, output_info, grid_info) 
 
 def run_events(jobdir, par_name, cluster, output, gridpack):
@@ -102,5 +103,5 @@ def run_events(jobdir, par_name, cluster, output, gridpack):
     print(submit_command)
     call(submit_command)
 
-script_from_yaml("../input/input.yaml", truncate=0)
+script_from_yaml("../input/stop_sbottom.yaml", truncate=0)
         

@@ -1,12 +1,20 @@
 from subprocess import call
 from utils import Tree
+from copy import deepcopy
 
 def proc_card_edit(parameters, out_dir, proc_dir = '../Cards'):
     proc_suffix = ''
+    param = deepcopy(parameters)
+    # If several processes
+    param["process"] = param["process"].replace(',', "\n\tadd process ")
+    print(param["process"])
+    # Restrictions
+    if "restriction" in parameters:
+        param["model"] += "-{}".format(param["restriction"])
     with open("{}/proc_card_mg5.dat".format(proc_dir)) as card:
         content = card.read()
-        for p in parameters:
-            content = content.replace("${}".format(p), parameters[p])
+        for p in param:
+            content = content.replace("${}".format(p), param[p])
         output_name =  out_dir + '/proc_card_mg5.dat'
         print(content, file = open(output_name, 'w'))
     return out_dir
