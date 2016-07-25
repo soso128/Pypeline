@@ -1,15 +1,20 @@
 import yaml
 import card_edit as cd
 import re
+import pathlib
 from itertools import product
-from subprocess import call
+from subprocess import call, Popen, PIPE
 from utils import make_list
+from sys import executable
 
 # Reads the yaml card and processes the information
 def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
     # Read yaml card and put parameters in dictionary
     f = open(filename)
     card = yaml.load(f)
+    # New job directory if one wants to keep the files
+    if "jobdir" in card:
+        jobdir = card["jobdir"]
     # Proc card
     proc_info = None
     if "proc" in card:
@@ -68,14 +73,32 @@ def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
     # Iterate over the cartesian product of 
     # parameters in the param card
     param_prod = (dict(zip(param_info.keys(), x)) for x in 
-                  product(*[make_list(param_info[k]) for k in param_info.keys()]))
+                  product(*[make_list(param_info[k]) 
+                            for k in param_info.keys()]))
     print(*[make_list(param_info[k]) for k in param_info.keys()])
+    job_ids = []
     for p in param_prod:
         par_name = cd.param_card_edit(p, decay_info, proc_info['model'], 
                                       out_dir, truncate = truncate)
         # Launch the run
         par_name = par_name.replace("param_card_", '').replace(".dat", '')
-        run_events(out_dir, par_name, cluster_info, output_info, grid_info) 
+        job_id = run_events(out_dir, par_name, cluster_info, 
+                            output_info, grid_info) 
+        job_ids.append(job_id)
+    # If cluster, launch process checking jobs and cleanup the job directory
+    # when all the jobs are done running
+    if cluster_info != None:
+        time = cluster_info["W"]
+        submit_command = ['bsub'] + list(sum([['-' + c, str(cluster_info[c])] 
+                                    for c in cluster_info], []))
+        submit_command += [executable] + ["-c"]
+        jobpath = str(pathlib.Path(out_dir).resolve())
+        python_command = "import check_processes as ch;ch.cleanup_job_dir('{}', [{}], {})".format(
+                    jobpath, ','.join(map(str, job_ids)), time)
+        submit_command += [python_command]
+        print(submit_command)
+        call(submit_command)
+
 
 def run_events(jobdir, par_name, cluster, output, gridpack):
     submit_command = ['./run_madgraph.sh']
@@ -101,7 +124,11 @@ def run_events(jobdir, par_name, cluster, output, gridpack):
         submit_command += ["-l", "{}/{}/".format(jobdir,par_name)]
     submit_command += ['-j', jobdir, '-p', par_name]
     print(submit_command)
-    call(submit_command)
-
-script_from_yaml("../input/stop_sbottom.yaml", truncate=0)
-        
+    p = Popen(submit_command, stdout = PIPE)
+    out = p.communicate()[0]
+    print(out)
+    # Get job ID
+    if cluster != None:
+        jobid = int(out.split()[1][1:-1])
+        return jobid
+    return 0

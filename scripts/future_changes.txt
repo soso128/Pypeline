@@ -1,17 +1,17 @@
 Future changes to the code:
 
-- take gridpacks
+- take gridpacks: still need to implement the Delphes part correctly
+
+- be able to run same parameter set several times (be careful with the seed)
 
 - better error handling
 
-- scripts that execute after all the subprocesses have ran (cleanup,etc...)
+- execute a script (beyond cleanup) when all the jobs are done running
 
 - safe eval?? (for the moment, the final expressions must have numbers and/or elementary operators
 but no standard functions...maybe the math library would be ok)
 
 - doc
-
-- separate executable
 
 - show cluster jobs not in exit status if successful
 
