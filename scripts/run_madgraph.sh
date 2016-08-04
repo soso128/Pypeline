@@ -9,6 +9,16 @@ output_dir="null"
 output_files="null"
 grid_status="null"
 grid_dir="null"
+is_pythia=0
+if [ -f ../Cards/pythia_card.dat ]
+then
+    is_pythia=1
+fi
+is_delphes=0
+if [ -f ../Cards/delphes_card.dat ]
+then
+    is_delphes=1
+fi
 # Parse optional command line arguments
 # -l if the run is local (expect SCRATCH name)
 # -s if there is a custom script to run (script name)
@@ -55,11 +65,11 @@ then
     nevents=`awk '{if($3 == "nevents") print $1}' < ../Cards/run_card.dat`
     ./run.sh $nevents 0 > madgraph_output.txt
     mv events.lhe.gz unweighted_events.lhe.gz
-    if [ -f ../Cards/pythia_card.dat ]
+    if [ $is_pythia -eq 1 ]
     then
         gunzip unweighted_events.lhe.gz
         ./madevent/bin/internal/run_pythia $PYTHIAPGS/src/ 
-        if [ -f ../Cards/delphes_card.dat ]
+        if [ $is_delphes -eq 1 ]
         then
             ./madevent/bin/internal/run_delphes $DELPHES/
         fi
@@ -69,15 +79,25 @@ then
     mv * run_01/
     cd run_01
 else
+    # Create a clean tar of MadGraph if needed
+    if [ ! \( -d ../misc/lock \) ]
+    then
+        ./clean_madgraph.sh $is_pythia
+    else
+        while [ -d ../misc/lock ]
+        do
+            true
+        done
+    fi
     # Install MadGraph locally
-    cp $TAR_DIR/$MADGRAPH.tar.gz $SCRATCH/
+    cp $TAR_DIR/MadGraph5.tar.gz $SCRATCH/
     cd $SCRATCH
-    tar -xzf $SCRATCH/$MADGRAPH.tar.gz
-    rm $SCRATCH/$MADGRAPH.tar.gz
+    tar -xzf MadGraph5.tar.gz
+    rm $SCRATCH/MadGraph5.tar.gz
     cd $local
     # Get Cards
-    cp $jobdir/*card*.dat $SCRATCH/$MADGRAPH/
-    cd $SCRATCH/$MADGRAPH
+    cp $jobdir/*card*.dat $SCRATCH/MadGraph5/
+    cd $SCRATCH/MadGraph5/
     # Generate output for the process and grab model name
     ./bin/mg5_aMC proc_card_mg5.dat
     model=`grep ^output proc_card_mg5.dat | awk '{print $2}'`
@@ -88,11 +108,11 @@ else
     cd $model/Events/
     # Edit the me5_configuration file to add Pythia and Delphes directories
     # if necessary
-    if [ -f ../Cards/pythia_card.dat ]
+    if [ $is_pythia -eq 1 ]
     then
         echo "pythia-pgs_path="$PYTHIAPGS >> ../Cards/me5_configuration.txt
     fi
-    if [ -f ../Cards/delphes_card.dat ]
+    if [ $is_delphes -eq 1 ]
     then
         echo "delphes_path="$DELPHES >> ../Cards/me5_configuration.txt
     fi

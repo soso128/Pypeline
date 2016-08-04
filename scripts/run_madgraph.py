@@ -1,4 +1,5 @@
 import yaml
+import os
 import card_edit as cd
 import re
 import pathlib
@@ -70,6 +71,9 @@ def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
     cd.pythia6_card_edit(pythia6_info, out_dir)
     # Edit the delphes card and copy it into job dir
     cd.delphes_card_edit(delphes_info, out_dir)
+    # Get the job launch command if cluster
+    cluster_command = os.environ["CLUS_LAUNCH"] \
+            if cluster_info != None else ""
     # Iterate over the cartesian product of 
     # parameters in the param card
     param_prod = (dict(zip(param_info.keys(), x)) for x in 
@@ -83,13 +87,13 @@ def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
         # Launch the run
         par_name = par_name.replace("param_card_", '').replace(".dat", '')
         job_id = run_events(out_dir, par_name, cluster_info, 
-                            output_info, grid_info) 
+                            output_info, grid_info, cluster_command) 
         job_ids.append(job_id)
     # If cluster, launch process checking jobs and cleanup the job directory
     # when all the jobs are done running
     if cluster_info != None:
-        time = cluster_info["W"]
-        submit_command = ['bsub'] + list(sum([['-' + c, str(cluster_info[c])] 
+        time = cluster_info[os.environ["CLUS_TIME"]]
+        submit_command = [cluster_command] + list(sum([['-' + c, str(cluster_info[c])] 
                                     for c in cluster_info], []))
         submit_command += [executable] + ["-c"]
         jobpath = str(pathlib.Path(out_dir).resolve())
@@ -100,7 +104,7 @@ def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
         call(submit_command)
 
 
-def run_events(jobdir, par_name, cluster, output, gridpack):
+def run_events(jobdir, par_name, cluster, output, gridpack, clus_command = ""):
     submit_command = ['./run_madgraph.sh']
     # If gridpack, set grid options
     grid_options = {"status": 'g', "dir": 'h'}
@@ -118,7 +122,7 @@ def run_events(jobdir, par_name, cluster, output, gridpack):
             pass
     # If cluster, specify the cluster options
     if cluster != None:
-        submit_command = ['bsub'] + list(sum([['-' + c, str(cluster[c])] 
+        submit_command = [clus_command] + list(sum([['-' + c, str(cluster[c])] 
                                     for c in cluster], [])) + submit_command
     else:
         submit_command += ["-l", "{}/{}/".format(jobdir,par_name)]

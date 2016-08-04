@@ -18,3 +18,5 @@ but no standard functions...maybe the math library would be ok)
 - find catchy name
 
 - pythia 8!
+
+- write a configure script to find: cluster parameters, python executables, madgraph, etc... --> modify env file with desired executables
