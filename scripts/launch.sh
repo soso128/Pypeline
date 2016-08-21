@@ -2,6 +2,12 @@
 
 source env_file.sh
 
+if [ $# -lt 1 ]
+then
+    echo "Usage: ./launch.sh <input card> [<truncate>]"
+    exit 1
+fi
+
 card=$1
 
 truncate=0

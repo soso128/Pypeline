@@ -10,15 +10,6 @@ output_files="null"
 grid_status="null"
 grid_dir="null"
 is_pythia=0
-if [ -f ../Cards/pythia_card.dat ]
-then
-    is_pythia=1
-fi
-is_delphes=0
-if [ -f ../Cards/delphes_card.dat ]
-then
-    is_delphes=1
-fi
 # Parse optional command line arguments
 # -l if the run is local (expect SCRATCH name)
 # -s if there is a custom script to run (script name)
@@ -51,6 +42,16 @@ do
         ;;
     esac
 done
+# Check if we have to run Pythia/Delphes
+if [ -f $jobdir/pythia_card.dat ]
+then
+    is_pythia=1
+fi
+is_delphes=0
+if [ -f $jobdir/delphes_card.dat ]
+then
+    is_delphes=1
+fi
 # Starting from an existing gridpack
 if [ $grid_status == 1 ]
 then
@@ -69,10 +70,21 @@ then
     then
         gunzip unweighted_events.lhe.gz
         ./madevent/bin/internal/run_pythia $PYTHIAPGS/src/ 
-        if [ $is_delphes -eq 1 ]
+    fi
+    if [ $is_delphes -eq 1 ]
+    then
+        if [ -f pythia_events.hep ]
         then
-            ./madevent/bin/internal/run_delphes $DELPHES/
+            $DELPHES/DelphesSTDHEP ../Cards/delphes_card.dat delphes_events.root pythia_events.hep 
+            gzip pythia_events.hep
+            else if [ -f pythia8_events.hepmc ]
+            then
+                $DELPHES/DelphesHepMC ../Cards/delphes_card.dat delphes_events.root pythia8_events.hep 
+            else
+                echo "Error: no Pythia input file for Delphes. The ROOT and LHCO files will not be generated."
+            fi
         fi
+        $DELPHES/root2lhco delphes_events.root delphes_events.lhco
     fi
     gzip unweighted_events.lhe
     mkdir run_01
@@ -156,6 +168,11 @@ for f in *.root
 do
     name=`basename $f .root`
     mv $f $name\_$parname.root
+done
+for f in *.lhco
+do
+    name=`basename $f .lhco`
+    mv $f $name\_$parname.lhco
 done
 # If output, copy requested files over
 if [ $output_dir != "null" ]

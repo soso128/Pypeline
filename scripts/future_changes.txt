@@ -1,7 +1,5 @@
 Future changes to the code:
 
-- take gridpacks: still need to implement the Delphes part correctly
-
 - be able to run same parameter set several times (be careful with the seed)
 
 - better error handling
