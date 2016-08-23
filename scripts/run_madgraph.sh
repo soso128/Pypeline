@@ -52,6 +52,8 @@ if [ -f $jobdir/delphes_card.dat ]
 then
     is_delphes=1
 fi
+# Random seed if needed
+seed=$(echo "`date +%s` % 10000" | bc)
 # Starting from an existing gridpack
 if [ $grid_status == 1 ]
 then
@@ -64,7 +66,7 @@ then
     cp $grid_dir/gridpack_$parname.tar.gz .
     tar --force-local -xzf gridpack_$parname.tar.gz
     nevents=`awk '{if($3 == "nevents") print $1}' < ../Cards/run_card.dat`
-    ./run.sh $nevents 0 > madgraph_output.txt
+    ./run.sh $nevents $seed > madgraph_output.txt
     mv events.lhe.gz unweighted_events.lhe.gz
     if [ $is_pythia -eq 1 ]
     then
@@ -87,7 +89,7 @@ then
         $DELPHES/root2lhco delphes_events.root delphes_events.lhco
     fi
     gzip unweighted_events.lhe
-    mkdir run_01
+    mkdir -p run_01
     mv * run_01/
     cd run_01
 else
@@ -128,6 +130,8 @@ else
     then
         echo "delphes_path="$DELPHES >> ../Cards/me5_configuration.txt
     fi
+    # Change the seed in the run card
+    sed -i "s/[0-9]*\s*=\s*iseed/$seed = iseed/" ../Cards/run_card.dat
     # Run MadGraph (+ Pythia + Delphes if the cards are there)
     ../bin/generate_events 0 run_01 > madgraph_output.txt
     mv madgraph_output.txt run_01
@@ -154,6 +158,7 @@ fi
 # Give unique names to files
 mv width.txt width_$parname.txt
 mv MG_xsec.txt MG_xsec_$parname.txt
+parname="$parname\_$seed"
 for f in *.lhe.gz
 do
     name=`basename $f .lhe.gz`

@@ -1,6 +1,6 @@
 import ast
 from re import match
-from numpy import arange
+from numpy import arange, dtype
 from collections import ChainMap
 
 # Tree for parameter dependencies
@@ -105,8 +105,11 @@ class Tree(object):
 # Takes the input for each parameter name and returns
 # a list of values
 def make_list(yaml_arg):
-    yaml_arg = str(yaml_arg).strip()
+    # If list, just return the value
+    if isinstance(yaml_arg, list):
+        return yaml_arg
     # If range, find intermediate values
+    yaml_arg = str(yaml_arg).strip()
     range_pattern = r"[0-9.]*-[0-9.]*\s*[0-9.]*"
     if match(range_pattern, yaml_arg):
         bounds, step = yaml_arg.split()
@@ -114,13 +117,8 @@ def make_list(yaml_arg):
         vmin, vmax = map(float, bounds.split('-'))
         vlist = list(arange(vmin, vmax, step)) + [vmax]
         return vlist
-    # If not range, return list of values or expression
-    values = yaml_arg.split()
-    try:
-        float(values[0])
-    except ValueError:
-        values = [yaml_arg]
-    return values
+    # If not list, return list with 1 number or expression
+    return [yaml_arg]
 
 
 # If a formula is given instead of a number, evaluate

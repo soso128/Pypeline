@@ -6,7 +6,7 @@ def proc_card_edit(parameters, out_dir, proc_dir = '../Cards'):
     proc_suffix = ''
     param = deepcopy(parameters)
     # If several processes
-    param["process"] = param["process"].replace(',', "\n\tadd process ")
+    param["process"] = param["process"].replace('--', "\n\tadd process ")
     print(param["process"])
     # Restrictions
     if "restriction" in parameters:

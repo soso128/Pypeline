@@ -39,6 +39,7 @@ def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
         grid_info = card["gridpack"]
         if grid_info["status"] == 0:
             run_info["gridpack"] = "True"
+            run_info["repeat"] = 1
     # Possible decays
     decay_info = None
     if "decays" in card:
@@ -79,16 +80,16 @@ def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
     param_prod = (dict(zip(param_info.keys(), x)) for x in 
                   product(*[make_list(param_info[k]) 
                             for k in param_info.keys()]))
-    print(*[make_list(param_info[k]) for k in param_info.keys()])
     job_ids = []
     for p in param_prod:
         par_name = cd.param_card_edit(p, decay_info, proc_info['model'], 
                                       out_dir, truncate = truncate)
         # Launch the run
         par_name = par_name.replace("param_card_", '').replace(".dat", '')
+        repeat = 1 if "repeat" not in run_info else run_info["repeat"]
         job_id = run_events(out_dir, par_name, cluster_info, 
-                            output_info, grid_info, cluster_command) 
-        job_ids.append(job_id)
+                            output_info, grid_info, repeat, cluster_command) 
+        job_ids += job_id
     # If cluster, launch process checking jobs and cleanup the job directory
     # when all the jobs are done running
     if cluster_info != None:
@@ -104,13 +105,14 @@ def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
         call(submit_command)
 
 
-def run_events(jobdir, par_name, cluster, output, gridpack, clus_command = ""):
+def run_events(jobdir, par_name, cluster, output, gridpack, repeat, clus_command = ""):
     submit_command = ['./run_madgraph.sh']
     # If gridpack, set grid options
     grid_options = {"status": 'g', "dir": 'h'}
     for o in grid_options:
         try:
-            submit_command += ["-{}".format(grid_options[o]), format(gridpack[o])]
+            submit_command += ["-{}".format(grid_options[o]), 
+                               format(gridpack[o])]
         except (KeyError, TypeError):
             pass
     # If output (script, etc, ...)
@@ -128,11 +130,13 @@ def run_events(jobdir, par_name, cluster, output, gridpack, clus_command = ""):
         submit_command += ["-l", "{}/{}/".format(jobdir,par_name)]
     submit_command += ['-j', jobdir, '-p', par_name]
     print(submit_command)
-    p = Popen(submit_command, stdout = PIPE)
-    out = p.communicate()[0]
-    print(out)
-    # Get job ID
-    if cluster != None:
-        jobid = int(out.split()[1][1:-1])
-        return jobid
-    return 0
+    job_ids = []
+    for i in range(repeat):
+        p = Popen(submit_command, stdout = PIPE)
+        out = p.communicate()[0]
+        print(out)
+        # Get job ID
+        if cluster != None:
+            jobid = int(out.split()[1][1:-1])
+            job_ids.append(jobid)
+    return job_ids
