@@ -110,7 +110,7 @@ def make_list(yaml_arg):
         return yaml_arg
     # If range, find intermediate values
     yaml_arg = str(yaml_arg).strip()
-    range_pattern = r"[0-9.]*-[0-9.]*\s*[0-9.]*"
+    range_pattern = r"[0-9.]*--[0-9.]*\s*[0-9.]*"
     if match(range_pattern, yaml_arg):
         bounds, step = yaml_arg.split()
         step = float(step)
