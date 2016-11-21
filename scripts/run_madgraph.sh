@@ -53,7 +53,7 @@ then
     is_delphes=1
 fi
 # Random seed if needed
-seed=$(echo "`date +%s` % 10000" | bc)
+seed=$(echo "`date +%N` % 10000" | bc)
 # Starting from an existing gridpack
 if [ $grid_status == 1 ]
 then
@@ -94,7 +94,7 @@ then
     cd run_01
 else
     # Create a clean tar of MadGraph if needed
-    if [ ! \( -d ../misc/lock \) ]
+    if ! [ -d ../misc/lock ]
     then
         ./clean_madgraph.sh $is_pythia
     else
@@ -144,6 +144,8 @@ else
 fi
 # Get decay width and/or cross section
 awk '{if($1 == "Width") print $3}' < madgraph_output.txt > width.txt
+echo "Width"
+cat width.txt
 awk '{if($1 == "Cross-section") print $3}' < madgraph_output.txt > MG_xsec.txt
 # Display output for debugging
 cat madgraph_output.txt
@@ -158,7 +160,7 @@ fi
 # Give unique names to files
 mv width.txt width_$parname.txt
 mv MG_xsec.txt MG_xsec_$parname.txt
-parname="$parname\_$seed"
+parname=$parname\_$seed
 for f in *.lhe.gz
 do
     name=`basename $f .lhe.gz`

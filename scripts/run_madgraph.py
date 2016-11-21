@@ -7,6 +7,7 @@ from itertools import product
 from subprocess import call, Popen, PIPE
 from utils import make_list
 from sys import executable
+from uuid import uuid4
 
 # Reads the yaml card and processes the information
 def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
@@ -82,6 +83,7 @@ def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
                             for k in param_info.keys()]))
     job_ids = []
     for p in param_prod:
+        print(p)
         par_name = cd.param_card_edit(p, decay_info, proc_info['model'], 
                                       out_dir, truncate = truncate)
         # Launch the run
@@ -98,8 +100,11 @@ def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
                                     for c in cluster_info], []))
         submit_command += [executable] + ["-c"]
         jobpath = str(pathlib.Path(out_dir).resolve())
-        python_command = "import check_processes as ch;ch.cleanup_job_dir('{}', [{}], {})".format(
-                    jobpath, ','.join(map(str, job_ids)), time)
+        # Put all job ids in a file
+        filename = "{}/job_ids_{}.txt".format(jobpath, str(uuid4()))
+        print('\n'.join(map(str,job_ids)), file = open(filename, 'w'))
+        python_command = "import check_processes as ch;ch.cleanup_job_dir('{}', {}, {})".format(
+                    jobpath, filename, time)
         submit_command += [python_command]
         print(submit_command)
         call(submit_command)

@@ -114,7 +114,7 @@ def make_list(yaml_arg):
     if match(range_pattern, yaml_arg):
         bounds, step = yaml_arg.split()
         step = float(step)
-        vmin, vmax = map(float, bounds.split('-'))
+        vmin, vmax = map(float, bounds.split('--'))
         vlist = list(arange(vmin, vmax, step)) + [vmax]
         return vlist
     # If not list, return list with 1 number or expression
