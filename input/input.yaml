@@ -1,3 +1,7 @@
+# gridpack:
+    # status: 1
+    # dir: /home/elhed001/DMX/
+
 proc:
     model: dmx
     output: dmx_test
@@ -5,10 +9,11 @@ proc:
 
 param:
     MX: 600
-    MDM: 550
+    delta: 0.1
+    MDM: "MX/(1 + delta)"
     Lambda: 10000
-    "~dmf : MDM" : 550
-    "~xf8 : MX" : 600
+    "~dmf : MDM" : "MDM"
+    "~xf8 : MX" : "MX"
 
 decays:
     9000408: 1.0 2 -2 9000401
@@ -17,18 +22,21 @@ run:
     ptj: 0
     ebeam1: 6500
     ebeam2: 6500
+    nevents: 500 
+    repeat: 2
 
 output:
-    dir: /home/elhed001/DMX/
-    files: unweighted_events.lhe.gz MG_xsec.txt *pythia*.hep.gz *delphes*.root madgraph_output.txt ../../Cards/me5_configuration.txt
+    dir: /home/elhed001/Bretzel/
+    files: pythia*.hepmc delphes*.root *.lhco
 
 cluster:
-    q: thepshort
-    W: 5:00
+    q: short
+    W: 20
     app: Reserve5G
 
-pythia6:
-    IMSS(22): 24
+pythia8:
+    card: /home/elhed001/Pythia/pythia8210/examples/pythia8MGtoHepMC.cmnd
+    exec: /home/elhed001/Pythia/pythia8210/examples/pythia8MGtoHepMC
 
 delphes:
-    /home/elhed001/DMX/Cards/delphes_card_ATLAS.dat
+    /home/elhed001/Bretzel/Cards/delphes_card_ATLAS.dat

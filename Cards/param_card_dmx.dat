@@ -18,8 +18,8 @@ Block ckmblock
 ## INFORMATION FOR FRBLOCK
 ###################################
 Block frblock 
-    1 7.200000e+02 # MDM 
-    2 8.000000e+02 # MX 
+    1 8.000000e+02 # MDM 
+    2 8.800000e+02 # MX 
     3 1.000000e+04 # Lambda 
 
 ###################################
@@ -192,12 +192,12 @@ Block QNUMBERS 9000308  # ~xm8
         3 8  # colour rep (1: singlet, 3: triplet, 8: octet)
         4 0  # Particle/Antiparticle distinction (0=own anti)
 Block QNUMBERS 9000403  # ~xf3 
-        1 0  # 3 times electric charge
+        1 -1  # 3 times electric charge
         2 2  # number of spin states (2S+1)
         3 3  # colour rep (1: singlet, 3: triplet, 8: octet)
         4 1  # Particle/Antiparticle distinction (0=own anti)
 Block QNUMBERS 9000406  # ~xf6 
-        1 0  # 3 times electric charge
+        1 4  # 3 times electric charge
         2 2  # number of spin states (2S+1)
         3 6  # colour rep (1: singlet, 3: triplet, 8: octet)
         4 1  # Particle/Antiparticle distinction (0=own anti)

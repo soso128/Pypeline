@@ -85,6 +85,6 @@ def pythia6_card_edit(parameters, output_dir, pythia6_dir = '../Cards/'):
                 content += "      {}={}".format(p, parameters[p])
             print(content, file = open("{}/pythia_card.dat".format(output_dir), 'w'))
 
-def delphes_card_edit(delphes_card, output_dir):
-    if delphes_card != None:
-        call(['cp', delphes_card, output_dir + '/delphes_card.dat'])
+def move_card(card, output_dir, name):
+    if card != None:
+        call(['cp', card, output_dir + '/{}_card.dat'.format(name)])

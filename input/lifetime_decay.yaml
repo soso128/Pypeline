@@ -1,0 +1,26 @@
+proc:
+    model: dmx
+    output: dmx_test
+    process: ~xf8 > u u~ ~dmf
+
+param:
+    MX: 100--5000 10
+    MDM: "MX/(1 + delta)"
+    delta: 0--0.20 0.005
+    Lambda: 10000
+
+run:
+    ptj: 0
+    ebeam1: 6500
+    ebeam2: 6500
+
+output:
+    dir: /home/elhed001/dmx/lifetimes/xf8/width/
+    script: /home/elhed001/Bretzel/user_scripts/process_width.py
+    files: newwidth*.txt
+
+cluster:
+    q: thepshort
+    W: 5:00
+    app: Reserve5G
+    o: /home/elhed001/dmx/lifetimes/xf8/width/job_output.txt

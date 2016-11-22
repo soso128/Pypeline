@@ -1,0 +1,37 @@
+gridpack:
+    status: 1
+    dir: /home/elhed001/Dissection_OnShell/Signals/gluino_squark/
+
+proc:
+    model: mssm
+    output: gluino_squark
+    process: p p > go go, (go > ur~ u, ur~ > u~ n1) 
+
+param:
+    mgo: [1500, 2000]
+    msu45: ["0.2 * mgo", "0.3 * mgo", "0.6 * mgo", "0.7 * mgo", "0.8 * mgo", "0.9 * mgo"]
+    "cr : msu4": "msu45"
+    mneu1: 1.0
+
+run:
+    ptj: 0
+    ebeam1: 6500
+    ebeam2: 6500
+    nevents: 50000 
+    repeat: 5
+
+output:
+    dir: /home/elhed001/Dissection_OnShell/Signals/gluino_squark/
+    files: delphes*.root
+
+cluster:
+    q: theplong
+    W: 10:00
+    app: Reserve5G
+    o: /home/elhed001/Dissection_OnShell/Signals/gluino_squark.txt
+
+pythia6:
+    IMSS(22): 24
+
+delphes:
+    /home/elhed001/Delphes-3.2.0/cards/delphes_card_CMS.tcl

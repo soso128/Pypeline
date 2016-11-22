@@ -2,3 +2,6 @@
 jobs/
 *.o
 __pycache__
+*.dat
+LHE_files/
+lifetimes/

@@ -49,6 +49,10 @@ def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
     pythia6_info = None
     if "pythia6" in card:
         pythia6_info = card["pythia6"]
+    # Pythia 8 info
+    pythia8_info = None
+    if "pythia8" in card:
+        pythia8_info = card["pythia8"]
     # Delphes info
     delphes_info = None
     if "delphes" in card:
@@ -71,8 +75,11 @@ def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
     cd.run_card_edit(run_info, out_dir)
     # Edit the pythia6 card and copy it into job dir
     cd.pythia6_card_edit(pythia6_info, out_dir)
+    # Edit the pythia8 card and copy it into job dir
+    cd.move_card(pythia8_info["card"], out_dir, "pythia8")
     # Edit the delphes card and copy it into job dir
-    cd.delphes_card_edit(delphes_info, out_dir)
+    print(delphes_info)
+    cd.move_card(delphes_info, out_dir, "delphes")
     # Get the job launch command if cluster
     cluster_command = os.environ["CLUS_LAUNCH"] \
             if cluster_info != None else ""
@@ -89,8 +96,9 @@ def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
         # Launch the run
         par_name = par_name.replace("param_card_", '').replace(".dat", '')
         repeat = 1 if "repeat" not in run_info else run_info["repeat"]
-        job_id = run_events(out_dir, par_name, cluster_info, 
-                            output_info, grid_info, repeat, cluster_command) 
+        job_id = run_events(out_dir, par_name, cluster_info,
+                            output_info, pythia8_info["exec"], grid_info, 
+                            repeat, cluster_command) 
         job_ids += job_id
     # If cluster, launch process checking jobs and cleanup the job directory
     # when all the jobs are done running
@@ -103,14 +111,14 @@ def script_from_yaml(filename, jobdir = "../jobs/", truncate = 2):
         # Put all job ids in a file
         filename = "{}/job_ids_{}.txt".format(jobpath, str(uuid4()))
         print('\n'.join(map(str,job_ids)), file = open(filename, 'w'))
-        python_command = "import check_processes as ch;ch.cleanup_job_dir('{}', {}, {})".format(
+        python_command = "import check_processes as ch;ch.cleanup_job_dir('{}', '{}', {})".format(
                     jobpath, filename, time)
         submit_command += [python_command]
         print(submit_command)
         call(submit_command)
 
 
-def run_events(jobdir, par_name, cluster, output, gridpack, repeat, clus_command = ""):
+def run_events(jobdir, par_name, cluster, output, pythia8_exec, gridpack, repeat, clus_command = ""):
     submit_command = ['./run_madgraph.sh']
     # If gridpack, set grid options
     grid_options = {"status": 'g', "dir": 'h'}
@@ -124,10 +132,12 @@ def run_events(jobdir, par_name, cluster, output, gridpack, repeat, clus_command
     output_options = {"script": 's', "dir": 'o', "files": 'f'}
     for o in output_options:
         try:
-            submit_command += ["-{}".format(output_options[o]), output[o]]
+            submit_command += ["-{}".format(output_options[o]), output[o]] 
         except (KeyError, TypeError):
             pass
     # If cluster, specify the cluster options
+    if pythia8_exec != None:
+        submit_command += ["-y", pythia8_exec]
     if cluster != None:
         submit_command = [clus_command] + list(sum([['-' + c, str(cluster[c])] 
                                     for c in cluster], [])) + submit_command

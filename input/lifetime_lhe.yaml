@@ -1,0 +1,23 @@
+proc:
+    model: dmx
+    output: dmx_test
+    process: p p > ~xf8 ~xf8~
+
+param:
+    MX: 410--5000 10
+    Lambda: 10000
+
+run:
+    ptj: 20
+    ebeam1: 6500
+    ebeam2: 6500
+
+output:
+    dir: /home/elhed001/dmx/lifetimes/xf8/LHE/
+    files: unweighted_events*.lhe.gz
+
+cluster:
+    q: thepshort
+    W: 5:00
+    app: Reserve5G
+    o: /home/elhed001/dmx/lifetimes/xf8/LHE/job_output.txt

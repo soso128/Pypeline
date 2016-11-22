@@ -1,0 +1,22 @@
+proc:
+    model: mssm
+    output: sbottom_pair
+    process: p p > t1 b1~,p p > t1~ b1
+
+param:
+    msu3: 500-2000 50
+    msd3: 500-2000 50
+
+run:
+    ebeam1: 6500
+    ebeam2: 6500
+    nevents: 10000 
+
+output:
+    dir: /home/elhed001/DMX/stop_sbottom/sbottom_stop/
+    files: MG_xsec*.txt
+
+cluster:
+    q: short
+    W: 5:00
+    app: Reserve5G

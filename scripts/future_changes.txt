@@ -1,7 +1,5 @@
 Future changes to the code:
 
-- be able to run same parameter set several times (be careful with the seed)
-
 - better error handling
 
 - execute a script (beyond cleanup) when all the jobs are done running
@@ -18,3 +16,5 @@ but no standard functions...maybe the math library would be ok)
 - pythia 8!
 
 - better editing of the param card: organize by blocks and IDS for each block
+
+- fix issue with regexp in output file names

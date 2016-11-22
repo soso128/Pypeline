@@ -9,7 +9,9 @@ output_dir="null"
 output_files="null"
 grid_status="null"
 grid_dir="null"
-is_pythia=0
+pythia8_exec="null"
+SCRATCH=/jobdir/$LSB_JOBID/
+echo $SCRATCH
 # Parse optional command line arguments
 # -l if the run is local (expect SCRATCH name)
 # -s if there is a custom script to run (script name)
@@ -19,7 +21,7 @@ is_pythia=0
 # -h gridpack directory if needed
 # -j job directory
 # -p file names with parameters
-while getopts l:s:o:f:g:h:j:p: opt
+while getopts l:s:o:f:g:h:j:p:y: opt
 do
     case $opt in
         l) SCRATCH="$OPTARG"
@@ -38,14 +40,22 @@ do
         ;;
         p) parname="$OPTARG"
         ;;
+        y) pythia8_exec="$OPTARG"
+        ;;
         \?) echo "Invalid option -$OPTARG" >&2
         ;;
     esac
 done
 # Check if we have to run Pythia/Delphes
+is_pythia6=0
 if [ -f $jobdir/pythia_card.dat ]
 then
-    is_pythia=1
+    is_pythia6=1
+fi
+is_pythia8=0
+if [ -f $jobdir/pythia8_card.dat ]
+then
+    is_pythia8=1
 fi
 is_delphes=0
 if [ -f $jobdir/delphes_card.dat ]
@@ -57,6 +67,7 @@ seed=$(echo "`date +%N` % 10000" | bc)
 # Starting from an existing gridpack
 if [ $grid_status == 1 ]
 then
+    echo $SCRATCH
     cd $SCRATCH/
     mkdir Template
     cd Template
@@ -68,25 +79,21 @@ then
     nevents=`awk '{if($3 == "nevents") print $1}' < ../Cards/run_card.dat`
     ./run.sh $nevents $seed > madgraph_output.txt
     mv events.lhe.gz unweighted_events.lhe.gz
-    if [ $is_pythia -eq 1 ]
+    if [ $is_pythia6 -eq 1 ]
     then
         gunzip unweighted_events.lhe.gz
         ./madevent/bin/internal/run_pythia $PYTHIAPGS/src/ 
-    fi
-    if [ $is_delphes -eq 1 ]
-    then
-        if [ -f pythia_events.hep ]
+        if [ $is_delphes -eq 1 ]
         then
-            $DELPHES/DelphesSTDHEP ../Cards/delphes_card.dat delphes_events.root pythia_events.hep 
-            gzip pythia_events.hep
-            else if [ -f pythia8_events.hepmc ]
+            if [ -f pythia_events.hep ]
             then
-                $DELPHES/DelphesHepMC ../Cards/delphes_card.dat delphes_events.root pythia8_events.hep 
+                $DELPHES/DelphesSTDHEP ../Cards/delphes_card.dat delphes_events.root pythia_events.hep 
+                gzip pythia_events.hep
             else
-                echo "Error: no Pythia input file for Delphes. The ROOT and LHCO files will not be generated."
+                echo "Error: no Pythia 6 input file for Delphes. The ROOT and LHCO files will not be generated."
             fi
+            $DELPHES/root2lhco delphes_events.root delphes_events.lhco
         fi
-        $DELPHES/root2lhco delphes_events.root delphes_events.lhco
     fi
     gzip unweighted_events.lhe
     mkdir -p run_01
@@ -122,13 +129,13 @@ else
     cd $model/Events/
     # Edit the me5_configuration file to add Pythia and Delphes directories
     # if necessary
-    if [ $is_pythia -eq 1 ]
+    if [ $is_pythia6 -eq 1 ]
     then
         echo "pythia-pgs_path="$PYTHIAPGS >> ../Cards/me5_configuration.txt
-    fi
-    if [ $is_delphes -eq 1 ]
-    then
-        echo "delphes_path="$DELPHES >> ../Cards/me5_configuration.txt
+        if [ $is_delphes -eq 1 ]
+        then
+            echo "delphes_path="$DELPHES >> ../Cards/me5_configuration.txt
+        fi
     fi
     # Change the seed in the run card
     sed -i "s/[0-9]*\s*=\s*iseed/$seed = iseed/" ../Cards/run_card.dat
@@ -140,6 +147,17 @@ else
     if [ $grid_status == 0 ]
     then
         cp ../../run_01_gridpack.tar.gz $grid_dir/gridpack_$parname.tar.gz
+    fi
+fi
+# Run pythia 8 (+Delphes) if needed
+if [ $is_pythia8 -eq 1 ]
+then
+    gunzip unweighted_events.lhe.gz
+    $pythia8_exec unweighted_events.lhe pythia8_events.hepmc ../../Cards/param_card.dat $jobdir/pythia8_card.dat
+    gzip unweighted_events.lhe
+    if [ $is_delphes -eq 1 ]
+    then
+        $DELPHES/DelphesHepMC ../Cards/delphes_card.dat delphes_events.root pythia8_events.hepmc 
     fi
 fi
 # Get decay width and/or cross section
@@ -170,6 +188,11 @@ for f in *.hep.gz
 do
     name=`basename $f .hep.gz`
     mv $f $name\_$parname.hep.gz
+done
+for f in *.hepmc
+do
+    name=`basename $f .hepmc`
+    mv $f $name\_$parname.hepmc
 done
 for f in *.root
 do
